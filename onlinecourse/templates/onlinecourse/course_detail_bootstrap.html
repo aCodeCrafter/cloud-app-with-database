@@ -48,12 +48,38 @@
                         <div class="card-header"><h5>Lesson {{lesson.order|add:1}}: {{lesson.title}}</h5></div>
                         <div class="card-body">{{lesson.content}}</div>
                     </div>
+
                 {% endfor %}
             </div>
             <!-- Task: show questions and choices -->
             <!-- <HINT> Use Bootstrap Collapse to hide exam first, more details could be found here
             https://www.w3schools.com/bootstrap4/bootstrap_collapse.asp-->
+            {% if user.is_authenticated %}
+                <button data-toggle="collapse" data-target="#exam_div" class="btn btn-primary btn-block">Start Exam</button>
 
+                <div class="card-columns-vertical">
+                  <form id="question_form" action='onlinecourse:submit' method="post">
+                    {% csrf_token %}
+                    <div id="exam_div" class="collapse">
+                        {% for question in course.question_set.all %}
+                            <div class="card-body">
+                                <h5 class="card-header"> {{question.question_text}}</h5>
+                                {% for choice in question.choice_set.all %}
+
+                                  <label class=form-check-label>
+                                    <input type="checkbox"
+                                    id="{{choice.id}}"
+                                    name="choice_{{choice.id}}"> {{choice.choice_content}}
+                                  </label><br>
+
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                        <button class="btn btn-success btn-block" type="submit">Submit</button>
+                    </div>
+                  </form>
+                </div>
+            {% endif %}
             <!--
 
             A collapse example here:
