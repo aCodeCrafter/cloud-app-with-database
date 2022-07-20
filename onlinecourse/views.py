@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
 # <HINT> Import any new Models here
-from .models import Course, Enrollment
+from .models import Course, Enrollment, Question, Choice, Submission
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404, render, redirect
 from django.urls import reverse
@@ -110,27 +110,49 @@ def enroll(request, course_id):
          # Collect the selected choices from exam form
          # Add each selected choice object to the submission object
          # Redirect to show_exam_result with the submission id
-#def submit(request, course_id):
+def submit(request, course_id):
+    course = get_object_or_404(Course, pk=course_id)
+    user = request.user
+    enrollment = Enrollment.objects.get(user=user,course=course)
+    print(enrollment.user.first_name)
+    submission = Submission.objects.create(enrollment=enrollment,)
+    req = request.POST
+    for id in req.keys():
+        if id[:7] == 'choice_':
+            submission.choices.add(id[7:])
+    return HttpResponseRedirect(reverse(viewname='onlinecourse:show_exam_result', args=(course.id, submission.id)))
 
+def get_list_of_choices_from_course_questions(course):
+    "Get a list of correct choices from course questions"
+    # Needs a refactor. There's got to be a better way to do this.
+    question_obj_list = []
+    question_iterator = course.question_set.all().iterator()
+    for i in question_iterator:
+        for j in i.choice_set.all().filter(correct_answer=True).iterator():
+            question_obj_list.append(j)
+    return question_obj_list
+def percent(a,b):
+	return 100*(a/b)
+def show_exam_result(request, course_id, submission_id):
+    context = {}
+    course = get_object_or_404(Course,pk=course_id)
+    submission = Submission.objects.get(id=submission_id)
+    correct_choices = get_list_of_choices_from_course_questions(course=course)
+    selected_ids = Choice.objects.all().filter(submission=submission)
 
-# <HINT> A example method to collect the selected choices from the exam form from the request object
-#def extract_answers(request):
-#    submitted_anwsers = []
-#    for key in request.POST:
-#        if key.startswith('choice'):
-#            value = request.POST[key]
-#            choice_id = int(value)
-#            submitted_anwsers.append(choice_id)
-#    return submitted_anwsers
+    raw_score = 0
 
-
-# <HINT> Create an exam result view to check if learner passed exam and show their question results and result for each question,
-# you may implement it based on the following logic:
-        # Get course and submission based on their ids
-        # Get the selected choice ids from the submission record
-        # For each selected choice, check if it is a correct answer or not
-        # Calculate the total score
-#def show_exam_result(request, course_id, submission_id):
-
-
-
+    for choice in selected_ids:
+        if choice.correct_answer == True:
+            raw_score += 1
+        # else:
+        #     raw_score -= 0.5
+    context['course'] = course
+    context['selected_ids'] = selected_ids
+    #   SHOULD GRADE BE A PERCENTAGE OR RAW SCORE?
+    context['grade'] = percent(raw_score,len(correct_choices))
+    context['user'] = user
+    # context['raw_score'] = raw_score
+    # context['total_correct_answers'] = len(correct_choices)
+    # context['selected_ids'] = selected_ids
+    return render(request, 'onlinecourse/exam_result_bootstrap.html', context)

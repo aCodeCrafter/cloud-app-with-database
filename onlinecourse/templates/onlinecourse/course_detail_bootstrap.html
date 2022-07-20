@@ -58,7 +58,7 @@
                 <button data-toggle="collapse" data-target="#exam_div" class="btn btn-primary btn-block">Start Exam</button>
 
                 <div class="card-columns-vertical">
-                  <form id="question_form" action='onlinecourse:submit' method="post">
+                  <form id="question_form"  action="{% url 'onlinecourse:submit' course.id %}" method="post">
                     {% csrf_token %}
                     <div id="exam_div" class="collapse">
                         {% for question in course.question_set.all %}
@@ -75,7 +75,7 @@
                                 {% endfor %}
                             </div>
                         {% endfor %}
-                        <button class="btn btn-success btn-block" type="submit">Submit</button>
+                        <input class="btn btn-success btn-block" type="submit" value="Submit">
                     </div>
                   </form>
                 </div>
