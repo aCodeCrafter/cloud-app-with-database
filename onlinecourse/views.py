@@ -151,7 +151,7 @@ def show_exam_result(request, course_id, submission_id):
     context['selected_ids'] = selected_ids
     #   SHOULD GRADE BE A PERCENTAGE OR RAW SCORE?
     context['grade'] = percent(raw_score,len(correct_choices))
-    context['user'] = user
+    context['user'] = request.user
     # context['raw_score'] = raw_score
     # context['total_correct_answers'] = len(correct_choices)
     # context['selected_ids'] = selected_ids
